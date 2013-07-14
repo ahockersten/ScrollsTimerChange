@@ -203,58 +203,52 @@ namespace TimerChange.mod {
             if (msg is RoomChatMessageMessage) {
                 RoomChatMessageMessage rcMsg = (RoomChatMessageMessage)msg;
                 if (isTimerChangeMsg(rcMsg)) {
+                    bool emitError = false;
                     string[] cmds = rcMsg.text.ToLower().Split(' ');
                     RoomChatMessageMessage newMsg = new RoomChatMessageMessage();
                     newMsg.from = GetName(); // name of the mod, that is
                     newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
-                    if (cmds.Length == 2) {
+                    switch (cmds.Length) {
+                    case 2:
                         newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
                         try {
                             timeout = Convert.ToInt32(cmds[1]);
                             if (timeout > 0 && timeout < DEFAULT_TIMEOUT) {
                                 totalTimeout = DEFAULT_TOTAL_TIMEOUT;
                                 newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout disabled";
-                            } else {
-                                timeout = DEFAULT_TIMEOUT;
-                                totalTimeout = DEFAULT_TOTAL_TIMEOUT;
-                                newMsg.text = "Turn timeout set to default. Total timeout disabled.";
                             }
-                        } catch (Exception) {
-                            timeout = DEFAULT_TIMEOUT;
-                            totalTimeout = DEFAULT_TOTAL_TIMEOUT;
-                            newMsg.text = "Invalid command. Turn timeout set to default. Total timeout disabled.";
+                            else {
+                                emitError = true;
+                            }
                         }
-                        App.ChatUI.handleMessage(newMsg);
-                        App.ArenaChat.ChatRooms.ChatMessage(newMsg);
-                    }
-                    else if (cmds.Length == 3) {
+                        catch (Exception) {
+                            emitError = true;
+                        }
+                        break;
+                    case 3:
                         newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
                         try {
                             timeout = Convert.ToInt32(cmds[1]);
                             totalTimeout = Convert.ToInt32(cmds[2]);
                             if (timeout > 0 && timeout < DEFAULT_TIMEOUT && totalTimeout > 0) {
                                 newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout set to " + totalTimeout + " seconds.";
-                            } else {
-                                timeout = DEFAULT_TIMEOUT;
-                                totalTimeout = DEFAULT_TOTAL_TIMEOUT;
-                                newMsg.text = "Turn timeout set to default. Total timeout disabled.";
                             }
-
-                        } catch (Exception) {
-                            timeout = DEFAULT_TIMEOUT;
-                            totalTimeout = DEFAULT_TOTAL_TIMEOUT;
-                            newMsg.text = "Invalid command. Turn timeout set to default. Total timeout disabled.";
+                            else {
+                                emitError = true;
+                            }
                         }
-                        App.ChatUI.handleMessage(newMsg);
-                        App.ArenaChat.ChatRooms.ChatMessage(newMsg);
+                        catch (Exception) {
+                            emitError = true;
+                        }
+                        break;
                     } 
-                    else {
+                    if (emitError) {
                         timeout = DEFAULT_TIMEOUT;
                         totalTimeout = DEFAULT_TOTAL_TIMEOUT;
                         newMsg.text = "Invalid command. Turn timeout set to default. Total timeout disabled.";
-                        App.ChatUI.handleMessage(newMsg);
-                        App.ArenaChat.ChatRooms.ChatMessage(newMsg);
                     }
+                    App.ChatUI.handleMessage(newMsg);
+                    App.ArenaChat.ChatRooms.ChatMessage(newMsg);
                 }
             }
         }
