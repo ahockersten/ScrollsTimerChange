@@ -185,14 +185,14 @@ namespace TimerChange.mod {
                     int elapsedMinsP1 = elapsedTimeP1 / 60;
                     int elapsedSecsP1 = elapsedTimeP1 % 60;
                     string p1Text = elapsedMinsP1 + " " + elapsedSecsP1;
-                    Rect p1Rect = new Rect((float)(Screen.width / 2) - width / 2f - namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
+                    Rect p1Rect = new Rect((float)(Screen.width / 2) - width / 2f - namesBoxX + Screen.height * 0.025f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     printTotalTimer(target, p1Text, p1Rect);
 
                     int elapsedTimeP2 = totalTimeout - p2TotalSeconds - p2TurnSeconds;
                     int elapsedMinsP2 = elapsedTimeP2 / 60;
                     int elapsedSecsP2 = elapsedTimeP2 % 60;
                     string p2Text = elapsedMinsP2 + " " + elapsedSecsP2;
-                    Rect p2Rect = new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
+                    Rect p2Rect = new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX + Screen.height * 0.025f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     printTotalTimer(target, p2Text, p2Rect);
                 }
             }
