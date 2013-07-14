@@ -29,6 +29,7 @@ namespace TimerChange.mod {
         private FieldInfo activeColorField;
         private FieldInfo battleUIField;
         private FieldInfo battleUISkinField;
+        private FieldInfo commField;
         private FieldInfo leftColorField;
         private FieldInfo roundTimeField;
         private FieldInfo roundTimerField;
@@ -40,6 +41,8 @@ namespace TimerChange.mod {
         private int p1TurnSeconds;
         private int p2TotalSeconds;
         private int p2TurnSeconds;
+        private int p1TotalTimeout = 100;
+        private int p2TotalTimeout = 100;
         private int timeout = DEFAULT_TIMEOUT;
         private bool turnEnded = false;
         private TileColor activePlayer = TileColor.unknown;
@@ -48,6 +51,7 @@ namespace TimerChange.mod {
             activeColorField = typeof(BattleMode).GetField("activeColor", BindingFlags.Instance | BindingFlags.NonPublic);
             battleUIField = typeof(BattleMode).GetField("battleUI", BindingFlags.Instance | BindingFlags.NonPublic);
             battleUISkinField = typeof(BattleMode).GetField("battleUISkin", BindingFlags.Instance | BindingFlags.NonPublic);
+            commField = typeof(BattleMode).GetField("comm", BindingFlags.Instance | BindingFlags.NonPublic);
             leftColorField = typeof(BattleMode).GetField("leftColor", BindingFlags.Instance | BindingFlags.NonPublic);
             roundTimeField = typeof(BattleMode).GetField("roundTime", BindingFlags.Instance | BindingFlags.NonPublic);
             roundTimerField = typeof(BattleMode).GetField("roundTimer", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -124,6 +128,11 @@ namespace TimerChange.mod {
                             showEndTurnMethod.Invoke(battleUI, new object[] { false } );
                             endTurnMethod.Invoke(target, new object[] { });
                         }
+
+                        // out of total time, surrender game!
+                        if (p1TotalTimeout - p1TotalSeconds - p1TurnSeconds < 0) {
+                            ((Communicator)commField.GetValue(target)).sendBattleRequest(new SurrenderMessage());
+                        }
                     }
                     else {
                         if (playerChanged) {
@@ -160,7 +169,7 @@ namespace TimerChange.mod {
                     GUI.skin = skin;
                     GUI.color = Color.white;
 
-                    string p1Text = (p1TotalSeconds + p1TurnSeconds).ToString();
+                    string p1Text = (p1TotalTimeout - p1TotalSeconds - p1TurnSeconds).ToString();
                     Rect p1Rect = new Rect((float)(Screen.width / 2) - width / 2f - namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     for (int i = 0; i < p1Text.Length; i++) {
                         int num7 = (int)(p1Text[i] - '0');
@@ -172,7 +181,7 @@ namespace TimerChange.mod {
                         p1Rect.x += p1Rect.width * 1.1f;
                     }
 
-                    string p2Text = (p2TotalSeconds + p2TurnSeconds).ToString();
+                    string p2Text = (p2TotalTimeout - p2TotalSeconds - p2TurnSeconds).ToString();
                     Rect p2Rect = new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     for (int i = 0; i < p2Text.Length; i++) {
                         int num7 = (int)(p2Text[i] - '0');
