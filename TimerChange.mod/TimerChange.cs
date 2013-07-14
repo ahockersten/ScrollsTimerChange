@@ -122,15 +122,15 @@ namespace TimerChange.mod {
                     try {
                         timeout = Convert.ToInt32(cmds[1]);
                         if (timeout > 0 && timeout < defaultTimeout) {
-                            newMsg.text = "Match timeout set to " + timeout + " seconds.";
+                            newMsg.text = "Turn timeout set to " + timeout + " seconds.";
                         }
                         else {
-                            newMsg.text = "Match timeout set to default.";
+                            newMsg.text = "Turn timeout set to default.";
                         }
                     }
                     catch (Exception) {
                         timeout = defaultTimeout;
-                        newMsg.text = "Invalid command. Match timeout set to default.";
+                        newMsg.text = "Invalid command. Turn timeout set to default.";
                     }
                     App.ChatUI.handleMessage(newMsg);
                     App.ArenaChat.ChatRooms.ChatMessage(newMsg);
