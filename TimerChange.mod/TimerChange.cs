@@ -231,7 +231,7 @@ namespace TimerChange.mod {
                             timeout = Convert.ToInt32(cmds[1]);
                             if (timeout > 0 && timeout < DEFAULT_TIMEOUT) {
                                 totalTimeout = DEFAULT_TOTAL_TIMEOUT;
-                                newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout disabled";
+                                newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout disabled.";
                             }
                             else {
                                 emitError = true;
