@@ -11,7 +11,7 @@ using Mono.Cecil;
 
 namespace TimerChange.mod {
     public class TimerChange : BaseMod, ICommListener {
-        private const int defaultTimeout = 91;
+        private const int DEFAULT_TIMEOUT = 91;
 
         private FieldInfo activeColorField;
         private FieldInfo battleUIField;
@@ -22,7 +22,7 @@ namespace TimerChange.mod {
         private MethodInfo endTurnMethod;
         private MethodInfo showEndTurnMethod;
 
-        private int timeout = defaultTimeout;
+        private int timeout = DEFAULT_TIMEOUT;
         private bool turnEnded = false;
 
         public TimerChange() {
@@ -72,7 +72,7 @@ namespace TimerChange.mod {
         }
 
         public override void AfterInvoke(InvocationInfo info, ref object returnValue) {
-            if (timeout > 0 && timeout < defaultTimeout) {
+            if (timeout < DEFAULT_TIMEOUT) {
                 // set timeout to user-defined value on game start
                 if (info.target is BattleMode && info.targetMethod.Equals("_handleMessage")) {
                     BattleMode target = (BattleMode)info.target;
@@ -121,15 +121,16 @@ namespace TimerChange.mod {
                     newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
                     try {
                         timeout = Convert.ToInt32(cmds[1]);
-                        if (timeout > 0 && timeout < defaultTimeout) {
+                        if (timeout > 0 && timeout < DEFAULT_TIMEOUT) {
                             newMsg.text = "Turn timeout set to " + timeout + " seconds.";
                         }
                         else {
+                            timeout = DEFAULT_TIMEOUT;
                             newMsg.text = "Turn timeout set to default.";
                         }
                     }
                     catch (Exception) {
-                        timeout = defaultTimeout;
+                        timeout = DEFAULT_TIMEOUT;
                         newMsg.text = "Invalid command. Turn timeout set to default.";
                     }
                     App.ChatUI.handleMessage(newMsg);
