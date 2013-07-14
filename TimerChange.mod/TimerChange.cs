@@ -148,62 +148,50 @@ namespace TimerChange.mod {
                     string p1Text = p1Seconds.ToString();
                     Rect p1Rect = new Rect((float)(Screen.width / 2) - width / 2f - namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     Vector2 c = default(Vector2);
-                    for (int i = 0; i < p1Text.Length; i++)
-                    {
+                    for (int i = 0; i < p1Text.Length; i++) {
                         int num7 = (int)(p1Text[i] - '0');
                         p1Rect.width = p1Rect.height * (float)kerning[num7] / 34f;
-                        if (p1Text.Length == 1)
-                        {
+                        if (p1Text.Length == 1) {
                             p1Rect.x += p1Rect.width / 2f;
                         }
-                        if (i == 0)
-                        {
+                        if (i == 0) {
                             c = new Vector2(p1Rect.x + p1Rect.width * 1.05f, p1Rect.y + p1Rect.height / 2f);
                         }
-                        {
-                            float num10 = Time.time - p1Seconds;
-                            float num11 = num10 / 0.6f;
-                            Color color = GUI.color;
-                            GUI.color = new Color(1f, 1f, 1f, 1f - num11);
-                            Rect position2 = GeomUtil.scaleAround(p1Rect, c, 1f + 3f * num11);
-                            GUI.DrawTexture(position2, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + p1Text[i]));
-                            if (num10 >= num9)
-                            {
-                                //this.resetTime = -1f;
-                            }
-                            GUI.color = color;
+                        float num10 = Time.time - p1Seconds;
+                        float num11 = num10 / 0.6f;
+                        Color color = GUI.color;
+                        GUI.color = new Color(1f, 1f, 1f, 1f - num11);
+                        Rect position2 = GeomUtil.scaleAround(p1Rect, c, 1f + 3f * num11);
+                        GUI.DrawTexture(position2, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + p1Text[i]));
+                        if (num10 >= num9) {
+                            //this.resetTime = -1f;
                         }
+                        GUI.color = color;
                         p1Rect.x += p1Rect.width * 1.1f;
                     }
 
                     string p2Text = p2Seconds.ToString();
                     Rect p2Rect = new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     Vector2 d = default(Vector2);
-                    for (int i = 0; i < p2Text.Length; i++)
-                    {
+                    for (int i = 0; i < p2Text.Length; i++) {
                         int num7 = (int)(p2Text[i] - '0');
                         p2Rect.width = p2Rect.height * (float)kerning[num7] / 34f;
-                        if (p2Text.Length == 1)
-                        {
+                        if (p2Text.Length == 1) {
                             p2Rect.x += p2Rect.width / 2f;
                         }
-                        if (i == 0)
-                        {
+                        if (i == 0) {
                             d = new Vector2(p2Rect.x + p2Rect.width * 1.05f, p2Rect.y + p2Rect.height / 2f);
                         }
-                        {
-                            float num10 = Time.time - p2Seconds;
-                            float num11 = num10 / 0.6f;
-                            Color color = GUI.color;
-                            GUI.color = new Color(1f, 1f, 1f, 1f - num11);
-                            Rect position2 = GeomUtil.scaleAround(p2Rect, c, 1f + 3f * num11);
-                            GUI.DrawTexture(position2, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + p2Text[i]));
-                            if (num10 >= num9)
-                            {
-                                //this.resetTime = -1f;
-                            }
-                            GUI.color = color;
+                        float num10 = Time.time - p2Seconds;
+                        float num11 = num10 / 0.6f;
+                        Color color = GUI.color;
+                        GUI.color = new Color(1f, 1f, 1f, 1f - num11);
+                        Rect position2 = GeomUtil.scaleAround(p2Rect, c, 1f + 3f * num11);
+                        GUI.DrawTexture(position2, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + p2Text[i]));
+                        if (num10 >= num9) {
+                            //this.resetTime = -1f;
                         }
+                        GUI.color = color;
                         p2Rect.x += p2Rect.width * 1.1f;
                     }
                 }
