@@ -20,6 +20,7 @@ namespace TimerChange.mod {
         private FieldInfo roundTimerField;
         private FieldInfo showClockField;
         private MethodInfo endTurnMethod;
+        private MethodInfo showEndTurnMethod;
 
         private int timeout = defaultTimeout;
         private bool turnEnded = false;
@@ -32,6 +33,7 @@ namespace TimerChange.mod {
             roundTimerField = typeof(BattleMode).GetField("roundTimer", BindingFlags.Instance | BindingFlags.NonPublic);
             showClockField = typeof(BattleMode).GetField("showClock", BindingFlags.Instance | BindingFlags.NonPublic);
             endTurnMethod = typeof(BattleMode).GetMethod("endTurn", BindingFlags.Instance | BindingFlags.NonPublic);
+            showEndTurnMethod = typeof(BattleModeUI).GetMethod("ShowEndTurn", BindingFlags.Instance | BindingFlags.NonPublic);
 
             App.Communicator.addListener(this);
         }
@@ -88,10 +90,11 @@ namespace TimerChange.mod {
                         float roundTime = (float)roundTimeField.GetValue(target);
                         float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
                         int seconds = Mathf.Max(0, (int)(roundTime + 1 - timePassed)); // add +1 so round stops 1 second AFTER hitting 0
-                        if (seconds == 0 && target.allowEndTurn()) {
+                        if (seconds == 0) {
                             if (!turnEnded) {
                                 turnEnded = true;
-                                ((BattleModeUI)battleUIField.GetValue(target)).StartCoroutine("FadeInEndTurn");
+                                BattleModeUI battleUI = (BattleModeUI)battleUIField.GetValue(target);
+                                showEndTurnMethod.Invoke(battleUI, new object[] { false } );
                                 endTurnMethod.Invoke(target, new object[] { });
                             }
                         }
