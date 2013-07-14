@@ -11,7 +11,7 @@ using Mono.Cecil;
 
 namespace TimerChange.mod {
     public class TimerChange : BaseMod, ICommListener {
-        private const int defaultTimeout = 91;
+        private const int defaultTimeout = 90;
 
         private FieldInfo activeColorField;
         private FieldInfo leftColorField;
@@ -56,6 +56,7 @@ namespace TimerChange.mod {
 
         public override bool BeforeInvoke(InvocationInfo info, out object returnValue) {
             returnValue = null;
+            // don't display TimerChange commands in chat
             if (info.target is ChatRooms && info.targetMethod.Equals("ChatMessage")) {
                 RoomChatMessageMessage msg = (RoomChatMessageMessage) info.arguments[0];
                 if (isTimerChangeMsg(msg)) {
@@ -66,8 +67,8 @@ namespace TimerChange.mod {
         }
 
         public override void AfterInvoke(InvocationInfo info, ref object returnValue) {
-            // timeout larger than 90 does not make any sense, smaller than 0 also makes no sense
-            if (timeout > 0 && timeout < 90) {
+            if (timeout > 0 && timeout < defaultTimeout) {
+                // set timeout to user-defined value on game start
                 if (info.target is BattleMode && info.targetMethod.Equals("_handleMessage")) {
                     BattleMode target = (BattleMode)info.target;
                     Message msg = (Message) info.arguments[0];
@@ -76,6 +77,7 @@ namespace TimerChange.mod {
                         roundTimeField.SetValue(target, timeout);
                     }
                 }
+                // end turn if timer has reached 0
                 if (info.target is BattleMode && info.targetMethod.Equals("OnGUI")) {
                     BattleMode target = (BattleMode)info.target;
                     if (activeColorField.GetValue(target).Equals(leftColorField.GetValue(target))) {
@@ -92,6 +94,7 @@ namespace TimerChange.mod {
         }
 
         public void onReconnect() {
+            // don't care
             return;
         }
 
@@ -105,7 +108,7 @@ namespace TimerChange.mod {
                     newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
                     try {
                         timeout = Convert.ToInt32(cmds[1]);
-                        if (timeout > 0 && timeout < 90) {
+                        if (timeout > 0 && timeout < defaultTimeout) {
                             newMsg.text = "Match timeout set to " + timeout + " seconds.";
                         }
                         else {
