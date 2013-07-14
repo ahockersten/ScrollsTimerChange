@@ -11,7 +11,7 @@ using Mono.Cecil;
 
 namespace TimerChange.mod {
     public class TimerChange : BaseMod, ICommListener {
-        private const int defaultTimeout = 90;
+        private const int defaultTimeout = 91;
 
         private FieldInfo activeColorField;
         private FieldInfo leftColorField;
