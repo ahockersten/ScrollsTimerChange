@@ -14,6 +14,7 @@ namespace TimerChange.mod {
         private const int defaultTimeout = 91;
 
         private FieldInfo activeColorField;
+        private FieldInfo battleUIField;
         private FieldInfo leftColorField;
         private FieldInfo roundTimeField;
         private FieldInfo roundTimerField;
@@ -25,6 +26,7 @@ namespace TimerChange.mod {
 
         public TimerChange() {
             activeColorField = typeof(BattleMode).GetField("activeColor", BindingFlags.Instance | BindingFlags.NonPublic);
+            battleUIField = typeof(BattleMode).GetField("battleUI", BindingFlags.Instance | BindingFlags.NonPublic);
             leftColorField = typeof(BattleMode).GetField("leftColor", BindingFlags.Instance | BindingFlags.NonPublic);
             roundTimeField = typeof(BattleMode).GetField("roundTime", BindingFlags.Instance | BindingFlags.NonPublic);
             roundTimerField = typeof(BattleMode).GetField("roundTimer", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -89,6 +91,7 @@ namespace TimerChange.mod {
                         if (seconds == 0 && target.allowEndTurn()) {
                             if (!turnEnded) {
                                 turnEnded = true;
+                                ((BattleModeUI)battleUIField.GetValue(target)).StartCoroutine("FadeInEndTurn");
                                 endTurnMethod.Invoke(target, new object[] { });
                             }
                         }
