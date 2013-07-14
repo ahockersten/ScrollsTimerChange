@@ -125,10 +125,10 @@ namespace TimerChange.mod {
                 TileColor nowActivePlayer = (TileColor)activeColorField.GetValue(target);
                 bool playerChanged = nowActivePlayer != activePlayer;
                 activePlayer = nowActivePlayer;
+                float roundTimer = (float)roundTimerField.GetValue(target);
+                float roundTime = (float)roundTimeField.GetValue(target);
+                float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
                 if (activeColorField.GetValue(target).Equals(leftColorField.GetValue(target))) {
-                    float roundTimer = (float)roundTimerField.GetValue(target);
-                    float roundTime = (float)roundTimeField.GetValue(target);
-                    float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
                     int seconds = Mathf.Max(0, (int)(roundTime + 1 - timePassed)); // add +1 so round stops 1 second AFTER hitting 0
                     p1TurnSeconds = (int)Mathf.Min(timePassed, roundTime);
                     // add last turn time to the total time
@@ -155,9 +155,6 @@ namespace TimerChange.mod {
                         p1TurnSeconds = 0;
                     }
 
-                    float roundTimer = (float)roundTimerField.GetValue(target);
-                    float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
-                    float roundTime = (float)roundTimeField.GetValue(target);
                     p2TurnSeconds = (int)Mathf.Min(timePassed, roundTime);
                     turnEnded = false;
                 }
