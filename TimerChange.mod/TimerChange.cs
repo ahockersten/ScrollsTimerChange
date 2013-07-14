@@ -98,9 +98,9 @@ namespace TimerChange.mod {
                                 endTurnMethod.Invoke(target, new object[] { });
                             }
                         }
-                        else {
-                            turnEnded = false;
-                        }
+                    }
+                    else {
+                        turnEnded = false;
                     }
                 }
             }
