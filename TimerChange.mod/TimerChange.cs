@@ -90,13 +90,11 @@ namespace TimerChange.mod {
                         float roundTime = (float)roundTimeField.GetValue(target);
                         float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
                         int seconds = Mathf.Max(0, (int)(roundTime + 1 - timePassed)); // add +1 so round stops 1 second AFTER hitting 0
-                        if (seconds == 0) {
-                            if (!turnEnded) {
-                                turnEnded = true;
-                                BattleModeUI battleUI = (BattleModeUI)battleUIField.GetValue(target);
-                                showEndTurnMethod.Invoke(battleUI, new object[] { false } );
-                                endTurnMethod.Invoke(target, new object[] { });
-                            }
+                        if (seconds == 0 && !turnEnded) {
+                            turnEnded = true;
+                            BattleModeUI battleUI = (BattleModeUI)battleUIField.GetValue(target);
+                            showEndTurnMethod.Invoke(battleUI, new object[] { false } );
+                            endTurnMethod.Invoke(target, new object[] { });
                         }
                     }
                     else {
