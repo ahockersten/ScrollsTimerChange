@@ -13,19 +13,7 @@ namespace TimerChange.mod {
     public class TimerChange : BaseMod, ICommListener {
         private const int DEFAULT_TIMEOUT = 91;
         private const int DEFAULT_TOTAL_TIMEOUT = -1;
-        private int[] kerning = new int[]
-        {
-            24,
-            14,
-            23,
-            21,
-            23,
-            20,
-            21,
-            22,
-            23,
-            21
-        };
+        private int[] kerning = new int[] { 24, 14, 23, 21, 23, 20, 21, 22, 23, 21 };
 
         private FieldInfo activeColorField;
         private FieldInfo battleUIField;
