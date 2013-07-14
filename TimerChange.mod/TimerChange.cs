@@ -21,6 +21,7 @@ namespace TimerChange.mod {
         private MethodInfo endTurnMethod;
 
         private int timeout = defaultTimeout;
+        private bool turnEnded = false;
 
         public TimerChange() {
             activeColorField = typeof(BattleMode).GetField("activeColor", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -85,8 +86,14 @@ namespace TimerChange.mod {
                         float roundTime = (float)roundTimeField.GetValue(target);
                         float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
                         int seconds = Mathf.Max(0, (int)(roundTime + 1 - timePassed)); // add +1 so round stops 1 second AFTER hitting 0
-                        if (seconds == 0) {
-                            endTurnMethod.Invoke(target, new object[] {});
+                        if (seconds == 0 && target.allowEndTurn()) {
+                            if (!turnEnded) {
+                                turnEnded = true;
+                                endTurnMethod.Invoke(target, new object[] { });
+                            }
+                        }
+                        else {
+                            turnEnded = false;
                         }
                     }
                 }
