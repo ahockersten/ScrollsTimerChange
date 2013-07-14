@@ -11,13 +11,16 @@ using Mono.Cecil;
 
 namespace TimerChange.mod {
     public class TimerChange : BaseMod, ICommListener {
+        private const int defaultTimeout = 91;
+
         private FieldInfo activeColorField;
         private FieldInfo leftColorField;
         private FieldInfo roundTimeField;
         private FieldInfo roundTimerField;
         private FieldInfo showClockField;
         private MethodInfo endTurnMethod;
-        private int timeout = 91;
+
+        private int timeout = defaultTimeout;
 
         public TimerChange() {
             activeColorField = typeof(BattleMode).GetField("activeColor", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -43,6 +46,7 @@ namespace TimerChange.mod {
                 return new MethodDefinition[] {
                     scrollsTypes["BattleMode"].Methods.GetMethod("_handleMessage", new Type[]{typeof(Message)}),
                     scrollsTypes["BattleMode"].Methods.GetMethod("OnGUI", new Type[]{}),
+                    scrollsTypes["ChatRooms"].Methods.GetMethod("ChatMessage", new Type[]{typeof(RoomChatMessageMessage)}),
                 };
             }
             catch {
@@ -52,6 +56,12 @@ namespace TimerChange.mod {
 
         public override bool BeforeInvoke(InvocationInfo info, out object returnValue) {
             returnValue = null;
+            if (info.target is ChatRooms && info.targetMethod.Equals("ChatMessage")) {
+                RoomChatMessageMessage msg = (RoomChatMessageMessage) info.arguments[0];
+                if (isTimerChangeMsg(msg)) {
+                    return true;
+                }
+            }
             return false;
         }
 
@@ -88,26 +98,33 @@ namespace TimerChange.mod {
         public void handleMessage(Message msg) {
             if (msg is RoomChatMessageMessage) {
                 RoomChatMessageMessage rcMsg = (RoomChatMessageMessage)msg;
-                string[] cmds = rcMsg.text.ToLower().Split(' ');
-                if (cmds[0].Equals("/timerchange") || cmds[0].Equals("/tc")) {
+                if (isTimerChangeMsg(rcMsg)) {
+                    string[] cmds = rcMsg.text.ToLower().Split(' ');
+                    RoomChatMessageMessage newMsg = new RoomChatMessageMessage();
+                    newMsg.from = GetName(); // name of the mod, that is
+                    newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
                     try {
                         timeout = Convert.ToInt32(cmds[1]);
-                        RoomChatMessageMessage newMsg = new RoomChatMessageMessage();
-                        newMsg.from = GetName(); // name of the mod, that is
-                        newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
-                        if (timeout < 0 || timeout > 90) {
-                            newMsg.text = "Match timeout set to default.";
+                        if (timeout > 0 && timeout < 90) {
+                            newMsg.text = "Match timeout set to " + timeout + " seconds.";
                         }
                         else {
-                            newMsg.text = "Match timeout set to " + timeout + " seconds";
+                            newMsg.text = "Match timeout set to default.";
                         }
-                        App.ChatUI.handleMessage(newMsg);
-                        App.ArenaChat.ChatRooms.ChatMessage(newMsg);
                     }
                     catch (Exception) {
+                        timeout = defaultTimeout;
+                        newMsg.text = "Invalid command. Match timeout set to default.";
                     }
+                    App.ChatUI.handleMessage(newMsg);
+                    App.ArenaChat.ChatRooms.ChatMessage(newMsg);
                 }
             }
+        }
+        
+        private bool isTimerChangeMsg(RoomChatMessageMessage msg) {
+            string[] cmds = msg.text.ToLower().Split(' ');
+            return cmds[0].Equals("/timerchange") || cmds[0].Equals("/tc");
         }
     }
 }
