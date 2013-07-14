@@ -12,6 +12,7 @@ using Mono.Cecil;
 namespace TimerChange.mod {
     public class TimerChange : BaseMod, ICommListener {
         private const int DEFAULT_TIMEOUT = 91;
+        private const int DEFAULT_TOTAL_TIMEOUT = -1;
         private int[] kerning = new int[]
         {
             24,
@@ -41,8 +42,7 @@ namespace TimerChange.mod {
         private int p1TurnSeconds;
         private int p2TotalSeconds;
         private int p2TurnSeconds;
-        private int p1TotalTimeout = 100;
-        private int p2TotalTimeout = 100;
+        private int totalTimeout = DEFAULT_TOTAL_TIMEOUT;
         private int timeout = DEFAULT_TIMEOUT;
         private bool turnEnded = false;
         private TileColor activePlayer = TileColor.unknown;
@@ -96,59 +96,57 @@ namespace TimerChange.mod {
         }
 
         public override void AfterInvoke(InvocationInfo info, ref object returnValue) {
-            if (timeout < DEFAULT_TIMEOUT) {
-                // set timeout to user-defined value on game start
-                if (info.target is BattleMode && info.targetMethod.Equals("_handleMessage")) {
-                    BattleMode target = (BattleMode)info.target;
-                    Message msg = (Message) info.arguments[0];
-                    if (msg is GameInfoMessage) {
-                        showClockField.SetValue(target, true);
-                        roundTimeField.SetValue(target, timeout);
+            // set timeout to user-defined value on game start
+            if (info.target is BattleMode && info.targetMethod.Equals("_handleMessage") && timeout < DEFAULT_TIMEOUT) {
+                BattleMode target = (BattleMode)info.target;
+                Message msg = (Message) info.arguments[0];
+                if (msg is GameInfoMessage) {
+                    showClockField.SetValue(target, true);
+                    roundTimeField.SetValue(target, timeout);
+                }
+            }
+            // end turn if timer has reached 0
+            if (info.target is BattleMode && info.targetMethod.Equals("OnGUI") && (timeout < DEFAULT_TIMEOUT || totalTimeout != DEFAULT_TOTAL_TIMEOUT)) {
+                BattleMode target = (BattleMode)info.target;
+                TileColor nowActivePlayer = (TileColor)activeColorField.GetValue(target);
+                bool playerChanged = nowActivePlayer != activePlayer;
+                activePlayer = nowActivePlayer;
+                if (activeColorField.GetValue(target).Equals(leftColorField.GetValue(target))) {
+                    float roundTimer = (float)roundTimerField.GetValue(target);
+                    float roundTime = (float)roundTimeField.GetValue(target);
+                    float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
+                    int seconds = Mathf.Max(0, (int)(roundTime + 1 - timePassed)); // add +1 so round stops 1 second AFTER hitting 0
+                    p1TurnSeconds = (int)Mathf.Min(timePassed, roundTime);
+                    if (playerChanged) {
+                        p2TotalSeconds += p2TurnSeconds;
+                        p2TurnSeconds = 0;
+                    }
+                    if (seconds == 0 && !turnEnded) {
+                        turnEnded = true;
+                        BattleModeUI battleUI = (BattleModeUI)battleUIField.GetValue(target);
+                        showEndTurnMethod.Invoke(battleUI, new object[] { false } );
+                        endTurnMethod.Invoke(target, new object[] { });
+                    }
+
+                    // out of total time, surrender game!
+                    if (totalTimeout != DEFAULT_TOTAL_TIMEOUT && totalTimeout - p1TotalSeconds - p1TurnSeconds < 0) {
+                        ((Communicator)commField.GetValue(target)).sendBattleRequest(new SurrenderMessage());
                     }
                 }
-                // end turn if timer has reached 0
-                if (info.target is BattleMode && info.targetMethod.Equals("OnGUI")) {
-                    BattleMode target = (BattleMode)info.target;
-                    TileColor nowActivePlayer = (TileColor)activeColorField.GetValue(target);
-                    bool playerChanged = nowActivePlayer != activePlayer;
-                    activePlayer = nowActivePlayer;
-                    if (activeColorField.GetValue(target).Equals(leftColorField.GetValue(target))) {
-                        float roundTimer = (float)roundTimerField.GetValue(target);
-                        float roundTime = (float)roundTimeField.GetValue(target);
-                        float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
-                        int seconds = Mathf.Max(0, (int)(roundTime + 1 - timePassed)); // add +1 so round stops 1 second AFTER hitting 0
-                        p1TurnSeconds = (int)Mathf.Min(timePassed, roundTime);
-                        if (playerChanged) {
-                            p2TotalSeconds += p2TurnSeconds;
-                            p2TurnSeconds = 0;
-                        }
-                        if (seconds == 0 && !turnEnded) {
-                            turnEnded = true;
-                            BattleModeUI battleUI = (BattleModeUI)battleUIField.GetValue(target);
-                            showEndTurnMethod.Invoke(battleUI, new object[] { false } );
-                            endTurnMethod.Invoke(target, new object[] { });
-                        }
-
-                        // out of total time, surrender game!
-                        if (p1TotalTimeout - p1TotalSeconds - p1TurnSeconds < 0) {
-                            ((Communicator)commField.GetValue(target)).sendBattleRequest(new SurrenderMessage());
-                        }
+                else {
+                    if (playerChanged) {
+                        p1TotalSeconds += p1TurnSeconds;
+                        p1TurnSeconds = 0;
                     }
-                    else {
-                        if (playerChanged) {
-                            p1TotalSeconds += p1TurnSeconds;
-                            p1TurnSeconds = 0;
-                        }
 
-                        float roundTimer = (float)roundTimerField.GetValue(target);
-                        float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
-                        float roundTime = (float)roundTimeField.GetValue(target);
-                        p2TurnSeconds = (int)Mathf.Min(timePassed, roundTime);
-                        turnEnded = false;
-                    }
+                    float roundTimer = (float)roundTimerField.GetValue(target);
+                    float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
+                    float roundTime = (float)roundTimeField.GetValue(target);
+                    p2TurnSeconds = (int)Mathf.Min(timePassed, roundTime);
+                    turnEnded = false;
                 }
-                if (info.target is BattleMode && info.targetMethod.Equals("OnGUI")) {
-                    BattleMode target = (BattleMode)info.target;
+
+                if (totalTimeout != DEFAULT_TOTAL_TIMEOUT) {
                     GUISkin skin = GUI.skin;
                     GUI.skin = (UnityEngine.GUISkin) battleUISkinField.GetValue(target);
                     GUI.color = new Color(1f, 1f, 1f, 0.75f);
@@ -169,7 +167,7 @@ namespace TimerChange.mod {
                     GUI.skin = skin;
                     GUI.color = Color.white;
 
-                    string p1Text = (p1TotalTimeout - p1TotalSeconds - p1TurnSeconds).ToString();
+                    string p1Text = (totalTimeout - p1TotalSeconds - p1TurnSeconds).ToString();
                     Rect p1Rect = new Rect((float)(Screen.width / 2) - width / 2f - namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     for (int i = 0; i < p1Text.Length; i++) {
                         int num7 = (int)(p1Text[i] - '0');
@@ -181,7 +179,7 @@ namespace TimerChange.mod {
                         p1Rect.x += p1Rect.width * 1.1f;
                     }
 
-                    string p2Text = (p2TotalTimeout - p2TotalSeconds - p2TurnSeconds).ToString();
+                    string p2Text = (totalTimeout - p2TotalSeconds - p2TurnSeconds).ToString();
                     Rect p2Rect = new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     for (int i = 0; i < p2Text.Length; i++) {
                         int num7 = (int)(p2Text[i] - '0');
@@ -209,29 +207,64 @@ namespace TimerChange.mod {
                     RoomChatMessageMessage newMsg = new RoomChatMessageMessage();
                     newMsg.from = GetName(); // name of the mod, that is
                     newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
-                    try {
-                        timeout = Convert.ToInt32(cmds[1]);
-                        if (timeout > 0 && timeout < DEFAULT_TIMEOUT) {
-                            newMsg.text = "Turn timeout set to " + timeout + " seconds.";
-                        }
-                        else {
+                    if (cmds.Length == 2) {
+                        newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
+                        try {
+                            timeout = Convert.ToInt32(cmds[1]);
+                            if (timeout > 0 && timeout < DEFAULT_TIMEOUT) {
+                                totalTimeout = DEFAULT_TOTAL_TIMEOUT;
+                                newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout disabled";
+                            } else {
+                                timeout = DEFAULT_TIMEOUT;
+                                totalTimeout = DEFAULT_TOTAL_TIMEOUT;
+                                newMsg.text = "Turn timeout set to default. Total timeout disabled.";
+                            }
+                        } catch (Exception) {
                             timeout = DEFAULT_TIMEOUT;
-                            newMsg.text = "Turn timeout set to default.";
+                            totalTimeout = DEFAULT_TOTAL_TIMEOUT;
+                            newMsg.text = "Invalid command. Turn timeout set to default. Total timeout disabled.";
                         }
+                        App.ChatUI.handleMessage(newMsg);
+                        App.ArenaChat.ChatRooms.ChatMessage(newMsg);
                     }
-                    catch (Exception) {
+                    else if (cmds.Length == 3) {
+                        newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
+                        try {
+                            timeout = Convert.ToInt32(cmds[1]);
+                            totalTimeout = Convert.ToInt32(cmds[2]);
+                            if (timeout > 0 && timeout < DEFAULT_TIMEOUT && totalTimeout > 0) {
+                                newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout set to " + totalTimeout + " seconds.";
+                            } else {
+                                timeout = DEFAULT_TIMEOUT;
+                                totalTimeout = DEFAULT_TOTAL_TIMEOUT;
+                                newMsg.text = "Turn timeout set to default. Total timeout disabled.";
+                            }
+
+                        } catch (Exception) {
+                            timeout = DEFAULT_TIMEOUT;
+                            totalTimeout = DEFAULT_TOTAL_TIMEOUT;
+                            newMsg.text = "Invalid command. Turn timeout set to default. Total timeout disabled.";
+                        }
+                        App.ChatUI.handleMessage(newMsg);
+                        App.ArenaChat.ChatRooms.ChatMessage(newMsg);
+                    } 
+                    else {
                         timeout = DEFAULT_TIMEOUT;
-                        newMsg.text = "Invalid command. Turn timeout set to default.";
+                        totalTimeout = DEFAULT_TOTAL_TIMEOUT;
+                        newMsg.text = "Invalid command. Turn timeout set to default. Total timeout disabled.";
+                        App.ChatUI.handleMessage(newMsg);
+                        App.ArenaChat.ChatRooms.ChatMessage(newMsg);
                     }
-                    App.ChatUI.handleMessage(newMsg);
-                    App.ArenaChat.ChatRooms.ChatMessage(newMsg);
                 }
             }
         }
         
         private bool isTimerChangeMsg(RoomChatMessageMessage msg) {
             string[] cmds = msg.text.ToLower().Split(' ');
-            return cmds[0].Equals("/timerchange") || cmds[0].Equals("/tc");
+            if (msg.from == App.MyProfile.ProfileInfo.name) {
+                return cmds[0].Equals("/timerchange") || cmds[0].Equals("/tc");
+            }
+            return false;
         }
     }
 }
