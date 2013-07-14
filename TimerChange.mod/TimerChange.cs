@@ -100,12 +100,14 @@ namespace TimerChange.mod {
             GUI.color = Color.white;
 
             for (int i = 0; i < text.Length; i++) {
-                int num7 = (int)(text[i] - '0');
-                rect.width = rect.height * (float)kerning[num7] / 34f;
-                if (text.Length == 1) {
-                    rect.x += rect.width / 2f;
+                if (text[i] != ' ') {
+                    int num7 = (int)(text[i] - '0');
+                    rect.width = rect.height * (float)kerning[num7] / 34f;
+                    if (text.Length == 1) {
+                        rect.x += rect.width / 2f;
+                    }
+                    GUI.DrawTexture(rect, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + text[i]));
                 }
-                GUI.DrawTexture(rect, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + text[i]));
                 rect.x += rect.width * 1.1f;
             }
         }
@@ -163,6 +165,7 @@ namespace TimerChange.mod {
                 if (totalTimeout != DEFAULT_TOTAL_TIMEOUT) {
                     GUISkin skin = GUI.skin;
                     GUI.skin = (UnityEngine.GUISkin) battleUISkinField.GetValue(target);
+                    // light transparency on the text background
                     GUI.color = new Color(1f, 1f, 1f, 0.75f);
 
                     // position of GUI box containing names
@@ -178,11 +181,17 @@ namespace TimerChange.mod {
                     GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX, (float)Screen.height * 0.01f, width, height), ResourceManager.LoadTexture("BattleUI/battlegui_timerbox"));
                     GUI.skin = skin;
 
-                    string p1Text = (totalTimeout - p1TotalSeconds - p1TurnSeconds).ToString();
+                    int elapsedTimeP1 = totalTimeout - p1TotalSeconds - p1TurnSeconds;
+                    int elapsedMinsP1 = elapsedTimeP1 / 60;
+                    int elapsedSecsP1 = elapsedTimeP1 % 60;
+                    string p1Text = elapsedMinsP1 + " " + elapsedSecsP1;
                     Rect p1Rect = new Rect((float)(Screen.width / 2) - width / 2f - namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     printTotalTimer(target, p1Text, p1Rect);
 
-                    string p2Text = (totalTimeout - p2TotalSeconds - p2TurnSeconds).ToString();
+                    int elapsedTimeP2 = totalTimeout - p2TotalSeconds - p2TurnSeconds;
+                    int elapsedMinsP2 = elapsedTimeP2 / 60;
+                    int elapsedSecsP2 = elapsedTimeP2 % 60;
+                    string p2Text = elapsedMinsP2 + " " + elapsedSecsP2;
                     Rect p2Rect = new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     printTotalTimer(target, p2Text, p2Rect);
                 }
