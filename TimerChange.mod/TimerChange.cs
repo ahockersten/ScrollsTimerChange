@@ -15,6 +15,7 @@ namespace TimerChange.mod {
 
         private FieldInfo activeColorField;
         private FieldInfo battleUIField;
+        private FieldInfo battleUISkinField;
         private FieldInfo leftColorField;
         private FieldInfo roundTimeField;
         private FieldInfo roundTimerField;
@@ -28,6 +29,7 @@ namespace TimerChange.mod {
         public TimerChange() {
             activeColorField = typeof(BattleMode).GetField("activeColor", BindingFlags.Instance | BindingFlags.NonPublic);
             battleUIField = typeof(BattleMode).GetField("battleUI", BindingFlags.Instance | BindingFlags.NonPublic);
+            battleUISkinField = typeof(BattleMode).GetField("battleUISkin", BindingFlags.Instance | BindingFlags.NonPublic);
             leftColorField = typeof(BattleMode).GetField("leftColor", BindingFlags.Instance | BindingFlags.NonPublic);
             roundTimeField = typeof(BattleMode).GetField("roundTime", BindingFlags.Instance | BindingFlags.NonPublic);
             roundTimerField = typeof(BattleMode).GetField("roundTimer", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -100,6 +102,33 @@ namespace TimerChange.mod {
                     else {
                         turnEnded = false;
                     }
+                }
+                if (info.target is BattleMode && info.targetMethod.Equals("OnGUI")) {
+                    BattleMode target = (BattleMode)info.target;
+                    GUISkin skin = GUI.skin;
+                    GUI.skin = (UnityEngine.GUISkin) battleUISkinField.GetValue(target);
+                    GUI.color = new Color(1f, 1f, 1f, 0.75f);
+
+                    // position of original GUI box
+                    float originalBoxX = (float)Screen.width * 0.4f - (float)Screen.height * 0.3f;
+                    float originalBoxY = (float)Screen.height * 0.027f;
+                    float originalBoxW = (float)Screen.height * 0.6f;
+
+                    // from GUIClock.renderHeight
+                    float height = (float)Screen.height * 0.08f;
+                    float width = height * 164f / 88f;
+
+                    GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f - originalBoxX, (float)Screen.height * 0.01f, width, height), ResourceManager.LoadTexture("BattleUI/battlegui_timerbox"));
+                    GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f + originalBoxX, (float)Screen.height * 0.01f, width, height), ResourceManager.LoadTexture("BattleUI/battlegui_timerbox"));
+
+                    GUI.color = Color.white;
+                    GUI.skin.label.fontSize = GUI.skin.label.fontSize;
+                    GUI.skin = skin;
+                        
+                    float infHeight = (float)Screen.height * 0.028f;
+                    float infWidth = infHeight * 39f / 28f;
+                    GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f - originalBoxX, (float)Screen.height * 0.0375f, infWidth, infHeight), ResourceManager.LoadTexture("BattleUI/infinity"));
+                    GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f + originalBoxX, (float)Screen.height * 0.0375f, infWidth, infHeight), ResourceManager.LoadTexture("BattleUI/infinity"));
                 }
             }
         }
