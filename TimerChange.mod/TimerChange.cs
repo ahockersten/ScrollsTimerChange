@@ -161,9 +161,8 @@ namespace TimerChange.mod {
                             c = new Vector2(p1Rect.x + p1Rect.width * 1.05f, p1Rect.y + p1Rect.height / 2f);
                         }
                         {
-                            float num9 = 0.6f;
                             float num10 = Time.time - p1Seconds;
-                            float num11 = num10 / num9;
+                            float num11 = num10 / 0.6f;
                             Color color = GUI.color;
                             GUI.color = new Color(1f, 1f, 1f, 1f - num11);
                             Rect position2 = GeomUtil.scaleAround(p1Rect, c, 1f + 3f * num11);
@@ -193,9 +192,8 @@ namespace TimerChange.mod {
                             d = new Vector2(p2Rect.x + p2Rect.width * 1.05f, p2Rect.y + p2Rect.height / 2f);
                         }
                         {
-                            float num9 = 0.6f;
                             float num10 = Time.time - p2Seconds;
-                            float num11 = num10 / num9;
+                            float num11 = num10 / 0.6f;
                             Color color = GUI.color;
                             GUI.color = new Color(1f, 1f, 1f, 1f - num11);
                             Rect position2 = GeomUtil.scaleAround(p2Rect, c, 1f + 3f * num11);
