@@ -67,7 +67,7 @@ namespace TimerChange.mod {
         }
 
         public static int GetVersion() {
-            return 3;
+            return 4;
         }
 
         public static MethodDefinition[] GetHooks(TypeDefinitionCollection scrollsTypes, int version) {
