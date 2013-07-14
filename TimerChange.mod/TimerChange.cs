@@ -12,21 +12,6 @@ using Mono.Cecil;
 namespace TimerChange.mod {
     public class TimerChange : BaseMod, ICommListener {
         private const int DEFAULT_TIMEOUT = 91;
-
-        private FieldInfo activeColorField;
-        private FieldInfo battleUIField;
-        private FieldInfo battleUISkinField;
-        private FieldInfo leftColorField;
-        private FieldInfo roundTimeField;
-        private FieldInfo roundTimerField;
-        private FieldInfo showClockField;
-        private MethodInfo endTurnMethod;
-        private MethodInfo showEndTurnMethod;
-
-        private int p1Seconds;
-        private int p2Seconds;
-        private int timeout = DEFAULT_TIMEOUT;
-        private bool turnEnded = false;
         private int[] kerning = new int[]
         {
             24,
@@ -40,6 +25,24 @@ namespace TimerChange.mod {
             23,
             21
         };
+
+        private FieldInfo activeColorField;
+        private FieldInfo battleUIField;
+        private FieldInfo battleUISkinField;
+        private FieldInfo leftColorField;
+        private FieldInfo roundTimeField;
+        private FieldInfo roundTimerField;
+        private FieldInfo showClockField;
+        private MethodInfo endTurnMethod;
+        private MethodInfo showEndTurnMethod;
+
+        private int p1TotalSeconds;
+        private int p1TurnSeconds;
+        private int p2TotalSeconds;
+        private int p2TurnSeconds;
+        private int timeout = DEFAULT_TIMEOUT;
+        private bool turnEnded = false;
+        private TileColor activePlayer = TileColor.unknown;
 
         public TimerChange() {
             activeColorField = typeof(BattleMode).GetField("activeColor", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -102,12 +105,19 @@ namespace TimerChange.mod {
                 // end turn if timer has reached 0
                 if (info.target is BattleMode && info.targetMethod.Equals("OnGUI")) {
                     BattleMode target = (BattleMode)info.target;
+                    TileColor nowActivePlayer = (TileColor)activeColorField.GetValue(target);
+                    bool playerChanged = nowActivePlayer != activePlayer;
+                    activePlayer = nowActivePlayer;
                     if (activeColorField.GetValue(target).Equals(leftColorField.GetValue(target))) {
                         float roundTimer = (float)roundTimerField.GetValue(target);
                         float roundTime = (float)roundTimeField.GetValue(target);
                         float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
                         int seconds = Mathf.Max(0, (int)(roundTime + 1 - timePassed)); // add +1 so round stops 1 second AFTER hitting 0
-                        p1Seconds = seconds;
+                        p1TurnSeconds = (int)Mathf.Min(timePassed, roundTime);
+                        if (playerChanged) {
+                            p2TotalSeconds += p2TurnSeconds;
+                            p2TurnSeconds = 0;
+                        }
                         if (seconds == 0 && !turnEnded) {
                             turnEnded = true;
                             BattleModeUI battleUI = (BattleModeUI)battleUIField.GetValue(target);
@@ -116,11 +126,15 @@ namespace TimerChange.mod {
                         }
                     }
                     else {
+                        if (playerChanged) {
+                            p1TotalSeconds += p1TurnSeconds;
+                            p1TurnSeconds = 0;
+                        }
+
                         float roundTimer = (float)roundTimerField.GetValue(target);
-                        float roundTime = (float)roundTimeField.GetValue(target);
                         float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
-                        int seconds = Mathf.Max(0, (int)(roundTime + 1 - timePassed)); // add +1 so round stops 1 second AFTER hitting 0
-                        p2Seconds = seconds;
+                        float roundTime = (float)roundTimeField.GetValue(target);
+                        p2TurnSeconds = (int)Mathf.Min(timePassed, roundTime);
                         turnEnded = false;
                     }
                 }
@@ -146,7 +160,7 @@ namespace TimerChange.mod {
                     GUI.skin = skin;
                     GUI.color = Color.white;
 
-                    string p1Text = p1Seconds.ToString();
+                    string p1Text = (p1TotalSeconds + p1TurnSeconds).ToString();
                     Rect p1Rect = new Rect((float)(Screen.width / 2) - width / 2f - namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     for (int i = 0; i < p1Text.Length; i++) {
                         int num7 = (int)(p1Text[i] - '0');
@@ -158,7 +172,7 @@ namespace TimerChange.mod {
                         p1Rect.x += p1Rect.width * 1.1f;
                     }
 
-                    string p2Text = p2Seconds.ToString();
+                    string p2Text = (p2TotalSeconds + p2TurnSeconds).ToString();
                     Rect p2Rect = new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
                     for (int i = 0; i < p2Text.Length; i++) {
                         int num7 = (int)(p2Text[i] - '0');
