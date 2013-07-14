@@ -23,8 +23,23 @@ namespace TimerChange.mod {
         private MethodInfo endTurnMethod;
         private MethodInfo showEndTurnMethod;
 
+        private int p1Seconds;
+        private int p2Seconds;
         private int timeout = DEFAULT_TIMEOUT;
         private bool turnEnded = false;
+        private int[] kerning = new int[]
+        {
+            24,
+            14,
+            23,
+            21,
+            23,
+            20,
+            21,
+            22,
+            23,
+            21
+        };
 
         public TimerChange() {
             activeColorField = typeof(BattleMode).GetField("activeColor", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -92,6 +107,7 @@ namespace TimerChange.mod {
                         float roundTime = (float)roundTimeField.GetValue(target);
                         float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
                         int seconds = Mathf.Max(0, (int)(roundTime + 1 - timePassed)); // add +1 so round stops 1 second AFTER hitting 0
+                        p1Seconds += seconds;
                         if (seconds == 0 && !turnEnded) {
                             turnEnded = true;
                             BattleModeUI battleUI = (BattleModeUI)battleUIField.GetValue(target);
@@ -100,6 +116,11 @@ namespace TimerChange.mod {
                         }
                     }
                     else {
+                        float roundTimer = (float)roundTimerField.GetValue(target);
+                        float roundTime = (float)roundTimeField.GetValue(target);
+                        float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
+                        int seconds = Mathf.Max(0, (int)(roundTime + 1 - timePassed)); // add +1 so round stops 1 second AFTER hitting 0
+                        p2Seconds += seconds;
                         turnEnded = false;
                     }
                 }
@@ -107,28 +128,86 @@ namespace TimerChange.mod {
                     BattleMode target = (BattleMode)info.target;
                     GUISkin skin = GUI.skin;
                     GUI.skin = (UnityEngine.GUISkin) battleUISkinField.GetValue(target);
-                    GUI.color = new Color(1f, 1f, 1f, 0.75f);
+                    GUI.color = Color.white;
 
-                    // position of original GUI box
-                    float originalBoxX = (float)Screen.width * 0.4f - (float)Screen.height * 0.3f;
-                    float originalBoxY = (float)Screen.height * 0.027f;
-                    float originalBoxW = (float)Screen.height * 0.6f;
+                    // position of GUI box containing names
+                    float namesBoxX = (float)Screen.width * 0.5f - (float)Screen.height * 0.3f;
+                    float namesBoxY = (float)Screen.height * 0.027f;
+                    float namesBoxW = (float)Screen.height * 0.6f;
 
                     // from GUIClock.renderHeight
                     float height = (float)Screen.height * 0.08f;
                     float width = height * 164f / 88f;
 
-                    GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f - originalBoxX, (float)Screen.height * 0.01f, width, height), ResourceManager.LoadTexture("BattleUI/battlegui_timerbox"));
-                    GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f + originalBoxX, (float)Screen.height * 0.01f, width, height), ResourceManager.LoadTexture("BattleUI/battlegui_timerbox"));
+                    GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f - namesBoxX, (float)Screen.height * 0.01f, width, height), ResourceManager.LoadTexture("BattleUI/battlegui_timerbox"));
+                    GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX, (float)Screen.height * 0.01f, width, height), ResourceManager.LoadTexture("BattleUI/battlegui_timerbox"));
 
-                    GUI.color = Color.white;
                     GUI.skin.label.fontSize = GUI.skin.label.fontSize;
                     GUI.skin = skin;
-                        
-                    float infHeight = (float)Screen.height * 0.028f;
-                    float infWidth = infHeight * 39f / 28f;
-                    GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f - originalBoxX, (float)Screen.height * 0.0375f, infWidth, infHeight), ResourceManager.LoadTexture("BattleUI/infinity"));
-                    GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f + originalBoxX, (float)Screen.height * 0.0375f, infWidth, infHeight), ResourceManager.LoadTexture("BattleUI/infinity"));
+
+                    string p1Text = p1Seconds.ToString();
+                    Rect p1Rect = new Rect((float)(Screen.width / 2) - width / 2f - namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
+                    Vector2 c = default(Vector2);
+                    for (int i = 0; i < p1Text.Length; i++)
+                    {
+                        int num7 = (int)(p1Text[i] - '0');
+                        p1Rect.width = p1Rect.height * (float)kerning[num7] / 34f;
+                        if (p1Text.Length == 1)
+                        {
+                            p1Rect.x += p1Rect.width / 2f;
+                        }
+                        if (i == 0)
+                        {
+                            c = new Vector2(p1Rect.x + p1Rect.width * 1.05f, p1Rect.y + p1Rect.height / 2f);
+                        }
+                        {
+                            float num9 = 0.6f;
+                            float num10 = Time.time - p1Seconds;
+                            float num11 = num10 / num9;
+                            Color color = GUI.color;
+                            GUI.color = new Color(1f, 1f, 1f, 1f - num11);
+                            Rect position2 = GeomUtil.scaleAround(p1Rect, c, 1f + 3f * num11);
+                            GUI.DrawTexture(position2, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + p1Text[i]));
+                            if (num10 >= num9)
+                            {
+                                //this.resetTime = -1f;
+                            }
+                            GUI.color = color;
+                        }
+                        p1Rect.x += p1Rect.width * 1.1f;
+                    }
+
+                    string p2Text = p2Seconds.ToString();
+                    Rect p2Rect = new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
+                    Vector2 d = default(Vector2);
+                    for (int i = 0; i < p2Text.Length; i++)
+                    {
+                        int num7 = (int)(p2Text[i] - '0');
+                        p2Rect.width = p2Rect.height * (float)kerning[num7] / 34f;
+                        if (p2Text.Length == 1)
+                        {
+                            p2Rect.x += p2Rect.width / 2f;
+                        }
+                        if (i == 0)
+                        {
+                            d = new Vector2(p2Rect.x + p2Rect.width * 1.05f, p2Rect.y + p2Rect.height / 2f);
+                        }
+                        {
+                            float num9 = 0.6f;
+                            float num10 = Time.time - p2Seconds;
+                            float num11 = num10 / num9;
+                            Color color = GUI.color;
+                            GUI.color = new Color(1f, 1f, 1f, 1f - num11);
+                            Rect position2 = GeomUtil.scaleAround(p2Rect, c, 1f + 3f * num11);
+                            GUI.DrawTexture(position2, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + p2Text[i]));
+                            if (num10 >= num9)
+                            {
+                                //this.resetTime = -1f;
+                            }
+                            GUI.color = color;
+                        }
+                        p2Rect.x += p2Rect.width * 1.1f;
+                    }
                 }
             }
         }
