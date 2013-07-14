@@ -95,6 +95,21 @@ namespace TimerChange.mod {
             return false;
         }
 
+        private void printTotalTimer(BattleMode target, string text, Rect rect) {
+            GUI.skin.label.fontSize = GUI.skin.label.fontSize;
+            GUI.color = Color.white;
+
+            for (int i = 0; i < text.Length; i++) {
+                int num7 = (int)(text[i] - '0');
+                rect.width = rect.height * (float)kerning[num7] / 34f;
+                if (text.Length == 1) {
+                    rect.x += rect.width / 2f;
+                }
+                GUI.DrawTexture(rect, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + text[i]));
+                rect.x += rect.width * 1.1f;
+            }
+        }
+
         public override void AfterInvoke(InvocationInfo info, ref object returnValue) {
             // set timeout to user-defined value on game start
             if (info.target is BattleMode && info.targetMethod.Equals("_handleMessage") && timeout < DEFAULT_TIMEOUT) {
@@ -105,7 +120,6 @@ namespace TimerChange.mod {
                     roundTimeField.SetValue(target, timeout);
                 }
             }
-            // end turn if timer has reached 0
             if (info.target is BattleMode && info.targetMethod.Equals("OnGUI") && (timeout < DEFAULT_TIMEOUT || totalTimeout != DEFAULT_TOTAL_TIMEOUT)) {
                 BattleMode target = (BattleMode)info.target;
                 TileColor nowActivePlayer = (TileColor)activeColorField.GetValue(target);
@@ -117,6 +131,7 @@ namespace TimerChange.mod {
                     float timePassed = (roundTimer >= 0f) ? Mathf.Floor(Time.time - roundTimer) : 0f;
                     int seconds = Mathf.Max(0, (int)(roundTime + 1 - timePassed)); // add +1 so round stops 1 second AFTER hitting 0
                     p1TurnSeconds = (int)Mathf.Min(timePassed, roundTime);
+                    // add last turn time to the total time
                     if (playerChanged) {
                         p2TotalSeconds += p2TurnSeconds;
                         p2TurnSeconds = 0;
@@ -134,6 +149,7 @@ namespace TimerChange.mod {
                     }
                 }
                 else {
+                    // add last turn time to the total time
                     if (playerChanged) {
                         p1TotalSeconds += p1TurnSeconds;
                         p1TurnSeconds = 0;
@@ -146,6 +162,7 @@ namespace TimerChange.mod {
                     turnEnded = false;
                 }
 
+                // draw indicators for the amount of time left
                 if (totalTimeout != DEFAULT_TOTAL_TIMEOUT) {
                     GUISkin skin = GUI.skin;
                     GUI.skin = (UnityEngine.GUISkin) battleUISkinField.GetValue(target);
@@ -162,34 +179,15 @@ namespace TimerChange.mod {
 
                     GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f - namesBoxX, (float)Screen.height * 0.01f, width, height), ResourceManager.LoadTexture("BattleUI/battlegui_timerbox"));
                     GUI.DrawTexture(new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX, (float)Screen.height * 0.01f, width, height), ResourceManager.LoadTexture("BattleUI/battlegui_timerbox"));
-
-                    GUI.skin.label.fontSize = GUI.skin.label.fontSize;
                     GUI.skin = skin;
-                    GUI.color = Color.white;
 
                     string p1Text = (totalTimeout - p1TotalSeconds - p1TurnSeconds).ToString();
                     Rect p1Rect = new Rect((float)(Screen.width / 2) - width / 2f - namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
-                    for (int i = 0; i < p1Text.Length; i++) {
-                        int num7 = (int)(p1Text[i] - '0');
-                        p1Rect.width = p1Rect.height * (float)kerning[num7] / 34f;
-                        if (p1Text.Length == 1) {
-                            p1Rect.x += p1Rect.width / 2f;
-                        }
-                        GUI.DrawTexture(p1Rect, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + p1Text[i]));
-                        p1Rect.x += p1Rect.width * 1.1f;
-                    }
+                    printTotalTimer(target, p1Text, p1Rect);
 
                     string p2Text = (totalTimeout - p2TotalSeconds - p2TurnSeconds).ToString();
                     Rect p2Rect = new Rect((float)(Screen.width / 2) - width / 2f + namesBoxX + Screen.height * 0.01f, (float)Screen.height * 0.035f, 0f, (float)Screen.height * 0.03f);
-                    for (int i = 0; i < p2Text.Length; i++) {
-                        int num7 = (int)(p2Text[i] - '0');
-                        p2Rect.width = p2Rect.height * (float)kerning[num7] / 34f;
-                        if (p2Text.Length == 1) {
-                            p2Rect.x += p2Rect.width / 2f;
-                        }
-                        GUI.DrawTexture(p2Rect, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + p2Text[i]));
-                        p2Rect.x += p2Rect.width * 1.1f;
-                    }
+                    printTotalTimer(target, p2Text, p2Rect);
                 }
             }
         }
