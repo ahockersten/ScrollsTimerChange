@@ -203,12 +203,24 @@ namespace TimerChange.mod {
             return;
         }
 
+        private int splitMinutesAndSeconds(string text, out int seconds) {
+            string[] split = text.Split(new char[] {':','.',','});
+            if (split.Length == 2) {
+                seconds = Convert.ToInt32(split[1]);
+                return Convert.ToInt32(split[0]);
+            }
+            else {
+                seconds = Convert.ToInt32(split[0]);
+                return 0;
+            }
+        }
+
         public void handleMessage(Message msg) {
             if (msg is RoomChatMessageMessage) {
                 RoomChatMessageMessage rcMsg = (RoomChatMessageMessage)msg;
                 if (isTimerChangeMsg(rcMsg)) {
                     bool emitError = false;
-                    string[] cmds = rcMsg.text.ToLower().Split(' ');
+                    string[] cmds = rcMsg.text.Split(' ');
                     RoomChatMessageMessage newMsg = new RoomChatMessageMessage();
                     newMsg.from = GetName(); // name of the mod, that is
                     newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
@@ -233,9 +245,11 @@ namespace TimerChange.mod {
                         newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
                         try {
                             timeout = Convert.ToInt32(cmds[1]);
-                            totalTimeout = Convert.ToInt32(cmds[2]);
+                            int seconds;
+                            int minutes = splitMinutesAndSeconds(cmds[2], out seconds);
+                            totalTimeout = minutes * 60 + seconds;
                             if (timeout > 0 && timeout < DEFAULT_TIMEOUT && totalTimeout > 0) {
-                                newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout set to " + totalTimeout + " seconds.";
+                                newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout set to " + minutes + " minutes and " + seconds + " seconds.";
                             }
                             else {
                                 emitError = true;
