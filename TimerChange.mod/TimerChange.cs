@@ -191,18 +191,6 @@ namespace TimerChange.mod {
             return;
         }
 
-        private int splitMinutesAndSeconds(string text, out int seconds) {
-            string[] split = text.Split(new char[] {':','.',','});
-            if (split.Length == 2) {
-                seconds = Convert.ToInt32(split[1]);
-                return Convert.ToInt32(split[0]);
-            }
-            else {
-                seconds = Convert.ToInt32(split[0]);
-                return 0;
-            }
-        }
-
         public void handleMessage(Message msg) {
             if (msg is RoomChatMessageMessage) {
                 RoomChatMessageMessage rcMsg = (RoomChatMessageMessage)msg;
@@ -265,6 +253,18 @@ namespace TimerChange.mod {
                 return cmds[0].Equals("/timerchange") || cmds[0].Equals("/tc");
             }
             return false;
+        }
+
+        private int splitMinutesAndSeconds(string text, out int seconds) {
+            string[] split = text.Split(new char[] {':','.',','});
+            if (split.Length == 2) {
+                seconds = Convert.ToInt32(split[1]);
+                return Convert.ToInt32(split[0]);
+            }
+            else {
+                seconds = Convert.ToInt32(split[0]);
+                return 0;
+            }
         }
     }
 }
