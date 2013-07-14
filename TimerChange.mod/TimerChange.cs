@@ -163,7 +163,7 @@ namespace TimerChange.mod {
                         GUI.color = new Color(1f, 1f, 1f, 1f - num11);
                         Rect position2 = GeomUtil.scaleAround(p1Rect, c, 1f + 3f * num11);
                         GUI.DrawTexture(position2, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + p1Text[i]));
-                        if (num10 >= num9) {
+                        if (num10 >= 0.6f) {
                             //this.resetTime = -1f;
                         }
                         GUI.color = color;
@@ -185,10 +185,11 @@ namespace TimerChange.mod {
                         float num10 = Time.time - p2Seconds;
                         float num11 = num10 / 0.6f;
                         Color color = GUI.color;
-                        GUI.color = new Color(1f, 1f, 1f, 1f - num11);
+                        GUI.color = Color.red;
+                        //GUI.color = new Color(1f, 1f, 1f, 1f - num11);
                         Rect position2 = GeomUtil.scaleAround(p2Rect, c, 1f + 3f * num11);
                         GUI.DrawTexture(position2, ResourceManager.LoadTexture("BattleMode/Clock/time__n_" + p2Text[i]));
-                        if (num10 >= num9) {
+                        if (num10 >= 0.6f) {
                             //this.resetTime = -1f;
                         }
                         GUI.color = color;
