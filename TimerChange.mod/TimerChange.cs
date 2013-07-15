@@ -108,6 +108,8 @@ namespace TimerChange.mod {
                 if (msg is GameInfoMessage) {
                     showClockField.SetValue(target, true);
                     roundTimeField.SetValue(target, timeout);
+                    p1TotalSeconds = 0;
+                    p2TotalSeconds = 0;
                 }
             }
             if (info.target is BattleMode && info.targetMethod.Equals("OnGUI") && (timeout < DEFAULT_TIMEOUT || totalTimeout != DEFAULT_TOTAL_TIMEOUT)) {
