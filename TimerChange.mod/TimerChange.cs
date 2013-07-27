@@ -10,7 +10,7 @@ using UnityEngine;
 using Mono.Cecil;
 
 namespace TimerChange.mod {
-    public class TimerChange : BaseMod, ICommListener {
+    public class TimerChange : BaseMod {
         private const int DEFAULT_TIMEOUT = 91;
         private const int DEFAULT_TOTAL_TIMEOUT = -1;
         private int[] kerning = new int[] { 24, 14, 23, 21, 23, 20, 21, 22, 23, 21 };
@@ -47,7 +47,6 @@ namespace TimerChange.mod {
             endTurnMethod = typeof(BattleMode).GetMethod("endTurn", BindingFlags.Instance | BindingFlags.NonPublic);
             showEndTurnMethod = typeof(BattleModeUI).GetMethod("ShowEndTurn", BindingFlags.Instance | BindingFlags.NonPublic);
 
-            App.Communicator.addListener(this);
         }
 
         public static string GetName() {
@@ -55,7 +54,7 @@ namespace TimerChange.mod {
         }
 
         public static int GetVersion() {
-            return 5;
+            return 6;
         }
 
         public static MethodDefinition[] GetHooks(TypeDefinitionCollection scrollsTypes, int version) {
@@ -63,7 +62,7 @@ namespace TimerChange.mod {
                 return new MethodDefinition[] {
                     scrollsTypes["BattleMode"].Methods.GetMethod("_handleMessage", new Type[]{typeof(Message)}),
                     scrollsTypes["BattleMode"].Methods.GetMethod("OnGUI", new Type[]{}),
-                    scrollsTypes["ChatRooms"].Methods.GetMethod("ChatMessage", new Type[]{typeof(RoomChatMessageMessage)}),
+                    scrollsTypes["Communicator"].Methods.GetMethod("sendRequest", new Type[]{ typeof(Message) }),
                 };
             }
             catch {
@@ -71,16 +70,72 @@ namespace TimerChange.mod {
             }
         }
 
-        public override bool BeforeInvoke(InvocationInfo info, out object returnValue) {
-            returnValue = null;
+        public override bool WantsToReplace(InvocationInfo info) {
             // don't display TimerChange commands in chat
-            if (info.target is ChatRooms && info.targetMethod.Equals("ChatMessage")) {
+            if (info.target is Communicator && info.targetMethod.Equals("sendRequest") && info.arguments[0] is RoomChatMessageMessage) {
                 RoomChatMessageMessage msg = (RoomChatMessageMessage) info.arguments[0];
                 if (isTimerChangeMsg(msg)) {
                     return true;
                 }
             }
             return false;
+        }
+
+        public override void ReplaceMethod(InvocationInfo info, out object returnValue) {
+            // when method is replaced, we know command line arguments etc are correct
+            returnValue = null;
+            RoomChatMessageMessage msg = (RoomChatMessageMessage) info.arguments[0];
+            bool emitError = false;
+            string[] cmds = msg.text.Split(' ');
+            RoomChatMessageMessage newMsg = new RoomChatMessageMessage();
+            newMsg.from = GetName(); // name of the mod, that is
+            newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom().name;
+            switch (cmds.Length) {
+                case 2:
+                newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom().name;
+                try {
+                    timeout = Convert.ToInt32(cmds[1]);
+                    if (timeout > 0 && timeout < DEFAULT_TIMEOUT) {
+                        totalTimeout = DEFAULT_TOTAL_TIMEOUT;
+                        newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout disabled.";
+                    }
+                    else {
+                        emitError = true;
+                    }
+                }
+                catch (Exception) {
+                    emitError = true;
+                }
+                break;
+                case 3:
+                newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom().name;
+                try {
+                    timeout = Convert.ToInt32(cmds[1]);
+                    int seconds;
+                    int minutes = splitMinutesAndSeconds(cmds[2], out seconds);
+                    totalTimeout = minutes * 60 + seconds;
+                    if (timeout > 0 && timeout < DEFAULT_TIMEOUT && totalTimeout > 0) {
+                        newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout set to " + minutes + " minutes and " + seconds + " seconds.";
+                    }
+                    else {
+                        emitError = true;
+                    }
+                }
+                catch (Exception) {
+                    emitError = true;
+                }
+                break;
+            } 
+            if (emitError) {
+                timeout = DEFAULT_TIMEOUT;
+                totalTimeout = DEFAULT_TOTAL_TIMEOUT;
+                newMsg.text = "Invalid command. Turn timeout set to default. Total timeout disabled.";
+            }
+            App.ChatUI.handleMessage(newMsg);
+            App.ArenaChat.ChatRooms.ChatMessage(newMsg);
+        }
+
+        public override void BeforeInvoke(InvocationInfo info) {
         }
 
         private void printTotalTimer(BattleMode target, string text, Rect rect) {
@@ -188,73 +243,9 @@ namespace TimerChange.mod {
             }
         }
 
-        public void onReconnect() {
-            // don't care
-            return;
-        }
-
-        public void handleMessage(Message msg) {
-            if (msg is RoomChatMessageMessage) {
-                RoomChatMessageMessage rcMsg = (RoomChatMessageMessage)msg;
-                if (isTimerChangeMsg(rcMsg)) {
-                    bool emitError = false;
-                    string[] cmds = rcMsg.text.Split(' ');
-                    RoomChatMessageMessage newMsg = new RoomChatMessageMessage();
-                    newMsg.from = GetName(); // name of the mod, that is
-                    newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
-                    switch (cmds.Length) {
-                    case 2:
-                        newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
-                        try {
-                            timeout = Convert.ToInt32(cmds[1]);
-                            if (timeout > 0 && timeout < DEFAULT_TIMEOUT) {
-                                totalTimeout = DEFAULT_TOTAL_TIMEOUT;
-                                newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout disabled.";
-                            }
-                            else {
-                                emitError = true;
-                            }
-                        }
-                        catch (Exception) {
-                            emitError = true;
-                        }
-                        break;
-                    case 3:
-                        newMsg.roomName = App.ArenaChat.ChatRooms.GetCurrentRoom();
-                        try {
-                            timeout = Convert.ToInt32(cmds[1]);
-                            int seconds;
-                            int minutes = splitMinutesAndSeconds(cmds[2], out seconds);
-                            totalTimeout = minutes * 60 + seconds;
-                            if (timeout > 0 && timeout < DEFAULT_TIMEOUT && totalTimeout > 0) {
-                                newMsg.text = "Turn timeout set to " + timeout + " seconds. Total timeout set to " + minutes + " minutes and " + seconds + " seconds.";
-                            }
-                            else {
-                                emitError = true;
-                            }
-                        }
-                        catch (Exception) {
-                            emitError = true;
-                        }
-                        break;
-                    } 
-                    if (emitError) {
-                        timeout = DEFAULT_TIMEOUT;
-                        totalTimeout = DEFAULT_TOTAL_TIMEOUT;
-                        newMsg.text = "Invalid command. Turn timeout set to default. Total timeout disabled.";
-                    }
-                    App.ChatUI.handleMessage(newMsg);
-                    App.ArenaChat.ChatRooms.ChatMessage(newMsg);
-                }
-            }
-        }
-        
         private bool isTimerChangeMsg(RoomChatMessageMessage msg) {
             string[] cmds = msg.text.ToLower().Split(' ');
-            if (msg.from == App.MyProfile.ProfileInfo.name) {
-                return cmds[0].Equals("/timerchange") || cmds[0].Equals("/tc");
-            }
-            return false;
+            return cmds[0].Equals("/timerchange") || cmds[0].Equals("/tc");
         }
 
         private int splitMinutesAndSeconds(string text, out int seconds) {
